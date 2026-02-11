@@ -1,0 +1,17 @@
+pip freeze > requirements.txt
+
+
+python -m venv .venv
+
+.venv\Scripts\activate     # Windows
+pip install -r requirements.txt
+
+
+.venv\\Scripts\\activate
+muốn thoát khỏi môi trường ảo thì sử dụng lệnh deactivate
+
+
+
+
+
+
