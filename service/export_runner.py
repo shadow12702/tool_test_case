@@ -79,19 +79,19 @@ def run_export_job(
         shutil.rmtree(export_dir)
     _ensure_dir(export_dir)
 
-    conv_uid = make_conv_uid()
-
     # Thread-local-ish session per worker (simple pool of sessions)
     sessions = [requests.Session() for _ in range(max_workers)]
 
     def _task(i: int, item: PromptItem) -> tuple[PromptItem, ChatCallResult]:
         sess = sessions[i % max_workers]
+        # Each prompt gets its own conv_uid so they can run in parallel
+        # without conversation-context conflicts on the server side.
         res = call_chat_api(
             cfg=cfg,
             user_input=item.user_input,
             user_id=user_id,
             user_name=user_name,
-            conv_uid=conv_uid,
+            conv_uid=make_conv_uid(),
             overrides=overrides,
             session=sess,
         )
