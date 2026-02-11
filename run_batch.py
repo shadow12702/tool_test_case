@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import math
 import sys
 import time
 from datetime import datetime
@@ -43,79 +42,47 @@ def main() -> int:
     log = _setup_logging()
     cfg = load_api_config(APP_ROOT / "config" / "api_config.json")
 
-    total_users = cfg.total_users
-    batch_size = cfg.user_count
-    total_batches = math.ceil(total_users / batch_size)
+    users = generate_users(cfg.user_count)
 
     log.info("=" * 60)
     log.info(f"  BATCH RUNNER")
-    log.info(f"  Total users  : {total_users}")
-    log.info(f"  Batch size   : {batch_size} users/batch")
-    log.info(f"  Total batches: {total_batches}")
+    log.info(f"  Users        : {cfg.user_count}")
     log.info(f"  Models       : {cfg.model_names}")
     log.info(f"  Chat modes   : {list(cfg.chat_modes.keys())}")
     log.info(f"  Max threads  : {cfg.max_user_threads}")
     log.info(f"  Prompt workers/job: {cfg.max_prompt_threads_per_user}")
     log.info("=" * 60)
 
-    global_start = time.perf_counter()
-    total_jobs_ok = 0
-    total_jobs_err = 0
-    total_jobs_count = 0
-
-    for batch_idx in range(total_batches):
-        start_user = batch_idx * batch_size + 1
-        count = min(batch_size, total_users - batch_idx * batch_size)
-        users = generate_users(count, start=start_user)
-
-        log.info(
-            f"--- Batch {batch_idx + 1}/{total_batches} "
-            f"| users {start_user}-{start_user + count - 1} "
-            f"({count} users) ---"
+    start = time.perf_counter()
+    try:
+        result = run_for_all_users(
+            cfg=cfg,
+            project_root=APP_ROOT,
+            export_root=APP_ROOT / "export",
+            users=users,
         )
+    except Exception as e:
+        elapsed = time.perf_counter() - start
+        log.error(f"  BATCH FAILED: {e}")
+        log.info(f"  Time: {elapsed:.1f}s")
+        return 1
 
-        batch_start = time.perf_counter()
-        try:
-            result = run_for_all_users(
-                cfg=cfg,
-                project_root=APP_ROOT,
-                export_root=APP_ROOT / "export",
-                users=users,
-            )
-            total_jobs_ok += result.jobs_ok
-            total_jobs_err += result.jobs_error
-            total_jobs_count += result.jobs_total
-
-            batch_elapsed = time.perf_counter() - batch_start
-            log.info(f"    run_id : {result.run_id}")
-            log.info(
-                f"    jobs   : {result.jobs_total} "
-                f"(ok: {result.jobs_ok}, error: {result.jobs_error})"
-            )
-            log.info(f"    time   : {batch_elapsed:.1f}s")
-        except Exception as e:
-            batch_elapsed = time.perf_counter() - batch_start
-            log.error(f"    BATCH FAILED: {e}")
-            log.info(f"    time   : {batch_elapsed:.1f}s")
-            total_jobs_err += 1
-
-    total_elapsed = time.perf_counter() - global_start
+    elapsed = time.perf_counter() - start
 
     log.info("=" * 60)
     log.info(f"  ALL DONE")
-    log.info(f"  Batches     : {total_batches}")
+    log.info(f"  run_id : {result.run_id}")
     log.info(
-        f"  Total jobs  : {total_jobs_count} "
-        f"(ok: {total_jobs_ok}, error: {total_jobs_err})"
+        f"  Jobs   : {result.jobs_total} "
+        f"(ok: {result.jobs_ok}, error: {result.jobs_error})"
     )
     log.info(
-        f"  Total time  : {total_elapsed:.1f}s "
-        f"({total_elapsed / 60:.1f} min)"
+        f"  Time   : {elapsed:.1f}s "
+        f"({elapsed / 60:.1f} min)"
     )
-    log.info(f"  Avg per batch: {total_elapsed / total_batches:.1f}s")
     log.info("=" * 60)
 
-    return 0 if total_jobs_err == 0 else 1
+    return 0 if result.jobs_error == 0 else 1
 
 
 if __name__ == "__main__":

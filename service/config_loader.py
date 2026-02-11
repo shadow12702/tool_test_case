@@ -14,8 +14,7 @@ class ApiConfig:
     max_user_threads: int
     max_prompt_threads_per_user: int
     max_workers: int
-    user_count: int          # batch size: users per batch
-    total_users: int         # total users to process across all batches
+    user_count: int
     model_names: list[str]
     chat_modes: dict[str, dict[str, Any]]
     default_user_id: str
@@ -32,7 +31,6 @@ class ApiConfig:
             "max_prompt_threads_per_user": self.max_prompt_threads_per_user,
             "max_workers": self.max_workers,
             "user_count": self.user_count,
-            "total_users": self.total_users,
             "model_names": self.model_names,
             "chat_modes": self.chat_modes,
             "default_user_id": self.default_user_id,
@@ -52,7 +50,6 @@ def load_api_config(path: Path) -> ApiConfig:
         max_prompt_threads_per_user=max(1, int(raw.get("max_prompt_threads_per_user", 1))),
         max_workers=int(raw.get("max_workers", 10)),
         user_count=max(1, int(raw.get("user_count", 3))),
-        total_users=max(1, int(raw.get("total_users", 0) or raw.get("user_count", 3))),
         model_names=list(raw.get("model_names", [])),
         chat_modes=dict(raw.get("chat_modes", {})),
         default_user_id=str(raw.get("default_user_id", "")).strip(),
