@@ -1,0 +1,250 @@
+{
+  "conv_uid": "80aef0cd-5e20-4cc6-a9b3-aa67d9bb68fc",
+  "template_name": "report",
+  "template_introduce": null,
+  "charts": [
+    {
+      "chart_uid": "a54616aa-0663-11f1-94d3-d8bbc137054b",
+      "chart_name": "Tổng số lượng bán hàng và số lượng bảo hành theo danh mục sản phẩm",
+      "chart_type": "BarChart",
+      "chart_desc": "Phân tích này tập trung vào việc đánh giá chất lượng sản phẩm dựa trên dữ liệu bán hàng và bảo hành. Chúng ta sẽ xem xét số lượng bán hàng theo danh mục sản phẩm, tỷ lệ bảo hành so với số lượng bán hàng cho từng danh mục, và xu hướng bảo hành theo thời gian. Điều này sẽ giúp quản lý xác định những sản phẩm hoặc danh mục nào có vấn đề về chất lượng cần được cải thiện.",
+      "chart_sql": "SELECT c.category_name AS category, SUM(s.quantity) AS total_sales, COUNT(w.claim_id) AS total_claims FROM sales s JOIN products p ON s.product_id = p.product_id JOIN category c ON p.category_id = c.category_id LEFT JOIN warranty w ON s.sale_id = w.sale_id GROUP BY c.category_name ORDER BY total_sales DESC;",
+      "column_name": [
+        "category",
+        "total_sales",
+        "total_claims"
+      ],
+      "values": [
+        {
+          "name": "Accessories",
+          "type": "total_sales",
+          "value": "899734"
+        },
+        {
+          "name": "Audio",
+          "type": "total_sales",
+          "value": "707354"
+        },
+        {
+          "name": "Tablet",
+          "type": "total_sales",
+          "value": "645303"
+        },
+        {
+          "name": "Desktop",
+          "type": "total_sales",
+          "value": "642140"
+        },
+        {
+          "name": "Laptop",
+          "type": "total_sales",
+          "value": "640336"
+        },
+        {
+          "name": "Wearable",
+          "type": "total_sales",
+          "value": "582445"
+        },
+        {
+          "name": "Smartphone",
+          "type": "total_sales",
+          "value": "578432"
+        },
+        {
+          "name": "Subscription Service",
+          "type": "total_sales",
+          "value": "447062"
+        },
+        {
+          "name": "Streaming Device",
+          "type": "total_sales",
+          "value": "192534"
+        },
+        {
+          "name": "Smart Speaker",
+          "type": "total_sales",
+          "value": "130430"
+        },
+        {
+          "name": "Accessories",
+          "type": "total_claims",
+          "value": "4650"
+        },
+        {
+          "name": "Audio",
+          "type": "total_claims",
+          "value": "3768"
+        },
+        {
+          "name": "Tablet",
+          "type": "total_claims",
+          "value": "3397"
+        },
+        {
+          "name": "Desktop",
+          "type": "total_claims",
+          "value": "3372"
+        },
+        {
+          "name": "Laptop",
+          "type": "total_claims",
+          "value": "3384"
+        },
+        {
+          "name": "Wearable",
+          "type": "total_claims",
+          "value": "2986"
+        },
+        {
+          "name": "Smartphone",
+          "type": "total_claims",
+          "value": "3135"
+        },
+        {
+          "name": "Subscription Service",
+          "type": "total_claims",
+          "value": "2374"
+        },
+        {
+          "name": "Streaming Device",
+          "type": "total_claims",
+          "value": "940"
+        },
+        {
+          "name": "Smart Speaker",
+          "type": "total_claims",
+          "value": "695"
+        }
+      ],
+      "style": null
+    },
+    {
+      "chart_uid": "a5c68f08-0663-11f1-b850-d8bbc137054b",
+      "chart_name": "Tỷ lệ bảo hành so với số lượng bán hàng theo danh mục sản phẩm",
+      "chart_type": "BarChart",
+      "chart_desc": "Phân tích này tính tỷ lệ bảo hành so với số lượng bán hàng cho từng danh mục sản phẩm, giúp xác định những danh mục sản phẩm có tỷ lệ bảo hành cao, có thể chỉ ra vấn đề về chất lượng sản phẩm.",
+      "chart_sql": "SELECT c.category_name AS category, CAST(COUNT(w.claim_id) AS DECIMAL) / SUM(s.quantity) * 100 AS warranty_rate FROM sales s JOIN products p ON s.product_id = p.product_id JOIN category c ON p.category_id = c.category_id LEFT JOIN warranty w ON s.sale_id = w.sale_id GROUP BY c.category_name ORDER BY warranty_rate DESC;",
+      "column_name": [
+        "category",
+        "warranty_rate"
+      ],
+      "values": [
+        {
+          "name": "Smartphone",
+          "type": "warranty_rate",
+          "value": "0.54198246293427749500"
+        },
+        {
+          "name": "Smart Speaker",
+          "type": "warranty_rate",
+          "value": "0.53285287127194663800"
+        },
+        {
+          "name": "Audio",
+          "type": "warranty_rate",
+          "value": "0.53268943131727536700"
+        },
+        {
+          "name": "Subscription Service",
+          "type": "warranty_rate",
+          "value": "0.53102254273456478100"
+        },
+        {
+          "name": "Laptop",
+          "type": "warranty_rate",
+          "value": "0.52847255191024712000"
+        },
+        {
+          "name": "Tablet",
+          "type": "warranty_rate",
+          "value": "0.52641937198494350700"
+        },
+        {
+          "name": "Desktop",
+          "type": "warranty_rate",
+          "value": "0.52511913289936773900"
+        },
+        {
+          "name": "Accessories",
+          "type": "warranty_rate",
+          "value": "0.51681941551614143700"
+        },
+        {
+          "name": "Wearable",
+          "type": "warranty_rate",
+          "value": "0.51266643202362454800"
+        },
+        {
+          "name": "Streaming Device",
+          "type": "warranty_rate",
+          "value": "0.48822545628304611100"
+        }
+      ],
+      "style": null
+    },
+    {
+      "chart_uid": "a658044a-0663-11f1-aa2c-d8bbc137054b",
+      "chart_name": "Top 10 sản phẩm bán chạy nhất",
+      "chart_type": "Table",
+      "chart_desc": "Phân tích này xem xét số lượng bán hàng của mỗi sản phẩm, giúp xác định những sản phẩm nào được bán nhiều nhất và có thể cần được kiểm tra chất lượng kỹ hơn.",
+      "chart_sql": "SELECT p.product_name AS product, SUM(s.quantity) AS total_sales FROM sales s JOIN products p ON s.product_id = p.product_id GROUP BY p.product_name ORDER BY total_sales DESC LIMIT 10;",
+      "column_name": [
+        "product",
+        "total_sales"
+      ],
+      "values": [
+        {
+          "name": "HomePod mini",
+          "type": "total_sales",
+          "value": "128870"
+        },
+        {
+          "name": "Apple Watch Series 7",
+          "type": "total_sales",
+          "value": "65739"
+        },
+        {
+          "name": "HomePod",
+          "type": "total_sales",
+          "value": "65623"
+        },
+        {
+          "name": "Apple Watch Series 9",
+          "type": "total_sales",
+          "value": "65481"
+        },
+        {
+          "name": "iPhone 13 Pro Max",
+          "type": "total_sales",
+          "value": "65465"
+        },
+        {
+          "name": "iPad Pro 12.9-inch",
+          "type": "total_sales",
+          "value": "65311"
+        },
+        {
+          "name": "iMac with Retina Display",
+          "type": "total_sales",
+          "value": "65252"
+        },
+        {
+          "name": "Leather Case for iPhone",
+          "type": "total_sales",
+          "value": "65229"
+        },
+        {
+          "name": "Apple Watch Hermès",
+          "type": "total_sales",
+          "value": "65206"
+        },
+        {
+          "name": "HomePod (2nd Generation)",
+          "type": "total_sales",
+          "value": "65173"
+        }
+      ],
+      "style": null
+    }
+  ]
+}

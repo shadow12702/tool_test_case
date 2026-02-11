@@ -1,0 +1,47 @@
+{
+	"base_url": "http://192.168.1.126:5670",
+	"endpoint": "/api/v1/chat/completions",
+	"timeout_seconds": 120,
+	"max_user_threads": 7,
+	"max_prompt_threads_per_user": 1,
+	"max_workers": 10,
+	"user_count": 3,
+	"total_users": 600,
+	"model_names": [
+		"gemma3:27b-cloud",
+		"nemotron-3-nano:30b-cloud",
+		"gpt-oss:20b-cloud"
+	],
+	"chat_modes": {
+		"chat_with_db_qa": {
+			"prompt_file": "csv/prompt_txt_to_sql.xlsx",
+			"sheet_name": "Prompts_Txt_to_SQL"
+		},
+		"chat_dashboard": {
+			"prompt_file": "csv/prompt_txt_to_sq-P10_only.xlsx",
+			"sheet_name": "Prompts_Txt_to_SQL"
+		}
+	},
+	"default_user_id": "userid-002",
+	"default_user_name": "user-003",
+	"default_headers": {
+		"accept": "application/json",
+		"user-id": "userid-002",
+		"Content-Type": "application/json"
+	},
+	"default_body": {
+		"conv_uid": "",
+		"user_input": "",
+		"user_name": "user-003",
+		"chat_mode": "chat_with_db_qa",
+		"app_code": "chat_with_db_qa",
+		"temperature": 0.6,
+		"max_new_tokens": 4000,
+		"select_param": "postgres",
+		"model_name": "gemma3:12b-it-qat",
+		"incremental": false,
+		"sys_code": "string",
+		"prompt_code": "string",
+		"ext_info": {}
+	}
+}

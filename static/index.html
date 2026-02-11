@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Chat Completions Export</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Chat Completions Export</h1>
+        <p class="muted">
+          Gọi API song song (multi-thread) cho tất cả tổ hợp
+          <b>(user &times; model &times; chat_mode)</b> và export kết quả ra
+          <code>export/&lt;user&gt;/&lt;model&gt;/&lt;chat_mode&gt;/</code>.
+        </p>
+      </header>
+
+      <section class="card">
+        <h2>Run</h2>
+
+        <div class="hint">
+          Tất cả cấu hình nằm trong <code>config/api_config.json</code>:
+          <code>user_count</code>, <code>model_names</code>, <code>chat_modes</code>,
+          <code>temperature</code>, …
+        </div>
+
+        <div class="actions">
+          <button id="runBtn">Run batch</button>
+        </div>
+
+        <div id="status" class="status"></div>
+      </section>
+    </div>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>
