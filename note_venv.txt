@@ -15,3 +15,10 @@ muốn thoát khỏi môi trường ảo thì sử dụng lệnh deactivate
 
 
 
+# Tìm process
+tasklist | findstr python
+
+# Kill bằng PID (thay 12345 bằng PID thực tế)
+taskkill /PID 12345 /F
+
+taskkill /IM python.exe /F

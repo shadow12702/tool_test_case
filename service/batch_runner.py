@@ -18,9 +18,6 @@ from service.user_generator import generate_users
 class BatchRunResult:
     run_id: str
     export_root: Path
-    users_total: int
-    models_total: int
-    chat_modes_total: int
     jobs_total: int
     jobs_ok: int
     jobs_error: int
@@ -124,9 +121,6 @@ def run_for_all_users(
     return BatchRunResult(
         run_id=run_id,
         export_root=export_root,
-        users_total=len(users),
-        models_total=len(model_names),
-        chat_modes_total=len(chat_modes),
         jobs_total=len(jobs),
         jobs_ok=jobs_ok,
         jobs_error=jobs_error,

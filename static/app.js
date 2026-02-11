@@ -19,7 +19,6 @@ async function runExport() {
 				"DONE",
 				`run_id: ${payload.run_id}`,
 				`export_root: ${payload.export_root}`,
-				`users: ${payload.users_total} | models: ${payload.models_total} | chat_modes: ${payload.chat_modes_total}`,
 				`jobs: ${payload.jobs_total} (ok: ${payload.jobs_ok}, error: ${payload.jobs_error})`,
 			].join("\n"),
 		);

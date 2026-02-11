@@ -5,8 +5,7 @@
 	"max_user_threads": 7,
 	"max_prompt_threads_per_user": 1,
 	"max_workers": 10,
-	"user_count": 3,
-	"total_users": 600,
+	"user_count": 4,
 	"model_names": [
 		"gemma3:27b-cloud",
 		"nemotron-3-nano:30b-cloud",
