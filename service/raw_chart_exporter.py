@@ -119,44 +119,25 @@ class RawChartExportResult:
     chart_count: int
 
 
-def export_raw_chart_html_for_dashboard(
-    responses_in_prompt_order: list[ChatCallResult],
-    export_dir: Path,
-    user_name: str,
+def _render_charts_to_html(
+    payload: dict[str, Any],
+    out_path: Path,
+    page_title: str,
 ) -> RawChartExportResult | None:
-    """
-    - Takes the *last usable* dashboard response (same logic as content extraction)
-    - Builds charts using pyecharts; Table type is rendered inline in the same HTML
-    - IndicatorValue is skipped entirely
-    - Exports: export/<user_name>/<model_name>/<chat_mode>/raw_chart.html
-    """
-    # ---- 1. Only use the LAST usable response ----
-    last_payload: dict[str, Any] | None = None
-    for res in reversed(responses_in_prompt_order):
-        if not res or not res.ok:
-            continue
-        p = extract_dashboard_payload_from_result(res)
-        if p:
-            last_payload = p
-            break
-
-    if not last_payload:
-        return None
-
+    """Shared renderer: build pyecharts Page from a dashboard payload and save to *out_path*."""
     # Lazy import so non-dashboard flows don't require pyecharts at runtime.
     from pyecharts import options as opts
     from pyecharts.charts import Bar, Line, Page, Pie
     from pyecharts.components import Table
 
-    charts = last_payload.get("charts")
+    charts = payload.get("charts")
     if not isinstance(charts, list) or not charts:
         return None
 
-    page = Page(page_title=f"Dashboard - {user_name}", layout=Page.SimplePageLayout)
+    page = Page(page_title=page_title, layout=Page.SimplePageLayout)
     added = 0
 
-    # We will collect description HTML blocks to inject after render.
-    # Key = index of chart in page order, Value = description HTML.
+    # Collect description HTML blocks to inject after render.
     desc_blocks: list[str] = []
 
     for idx, ch in enumerate(charts, start=1):
@@ -168,10 +149,7 @@ def export_raw_chart_html_for_dashboard(
         chart_sql = str(ch.get("chart_sql") or "")
         chart_type_raw = str(ch.get("chart_type") or "")
 
-        # ---- 4. Multiple types -> take the FIRST supported one ----
         chosen = _pick_chart_type(chart_type_raw)
-
-        # ---- 5. IndicatorValue or unsupported -> skip entirely ----
         if chosen is None:
             continue
 
@@ -197,7 +175,7 @@ def export_raw_chart_html_for_dashboard(
         if not xs or not series_map:
             continue
 
-        # ---- 3. Build description block (chart_name, chart_desc, chart_sql) ----
+        # Build description block
         desc_html_parts = [
             f'<div class="chart-info" style="max-width:900px;margin:30px auto 6px;'
             f'font-family:sans-serif;">',
@@ -220,7 +198,7 @@ def export_raw_chart_html_for_dashboard(
         desc_html_parts.append('</div>')
         desc_blocks.append("\n".join(desc_html_parts))
 
-        # ---- 2. Table -> rendered as a table inside the same page ----
+        # Table
         if chosen == "Table":
             col_keys = list(series_map.keys())
             headers = ["name", *col_keys]
@@ -241,7 +219,6 @@ def export_raw_chart_html_for_dashboard(
             added += 1
             continue
 
-        # Shared title opts – keep minimal because we inject our own rich text above
         def _title_opts() -> opts.TitleOpts:
             return opts.TitleOpts(title="", subtitle="")
 
@@ -304,22 +281,15 @@ def export_raw_chart_html_for_dashboard(
     if added <= 0:
         return None
 
-    # ---- Render to file ----
-    export_dir.mkdir(parents=True, exist_ok=True)
-    out_path = export_dir / "raw_chart.html"
+    # Render to file
+    out_path.parent.mkdir(parents=True, exist_ok=True)
     page.render(str(out_path))
 
-    # ---- 3. Post-process: inject description text blocks before each chart ----
+    # Post-process: inject description text blocks before each chart
     if desc_blocks:
         import re
 
         html = out_path.read_text(encoding="utf-8")
-
-        # pyecharts Page renders each chart/table as a direct child inside
-        # <div class="box">. The children look like:
-        #   <div id="hexid" class="chart-container" style="width:...">  (charts)
-        #   <div id="hexid">  <p class="title">...  (Table component)
-        # We match ALL top-level <div id="hexhex..."> inside .box.
         chart_div_pattern = re.compile(
             r'(?=(<div\s+id="[a-f0-9]+"[\s>]))'
         )
@@ -334,3 +304,62 @@ def export_raw_chart_html_for_dashboard(
             out_path.write_text(html, encoding="utf-8")
 
     return RawChartExportResult(html_path=out_path, chart_count=added)
+
+
+def render_single_dashboard_html(
+    res: ChatCallResult,
+    prompt_id: str,
+    export_dir: Path,
+    user_name: str,
+) -> RawChartExportResult | None:
+    """Render a single dashboard response to its own HTML file.
+
+    File is saved as ``export_dir / {prompt_id}.html``.
+    Returns None when the response has no usable chart payload.
+    """
+    if not res or not res.ok:
+        return None
+
+    payload = extract_dashboard_payload_from_result(res)
+    if not payload:
+        return None
+
+    safe_name = _sanitize_filename(prompt_id)
+    out_path = export_dir / f"{safe_name}.html"
+
+    return _render_charts_to_html(
+        payload=payload,
+        out_path=out_path,
+        page_title=f"Dashboard - {user_name} - {prompt_id}",
+    )
+
+
+def export_raw_chart_html_for_dashboard(
+    responses_in_prompt_order: list[ChatCallResult],
+    export_dir: Path,
+    user_name: str,
+) -> RawChartExportResult | None:
+    """
+    Legacy: takes the *last usable* response and renders all its charts
+    into a single raw_chart.html file.
+    """
+    last_payload: dict[str, Any] | None = None
+    for res in reversed(responses_in_prompt_order):
+        if not res or not res.ok:
+            continue
+        p = extract_dashboard_payload_from_result(res)
+        if p:
+            last_payload = p
+            break
+
+    if not last_payload:
+        return None
+
+    export_dir.mkdir(parents=True, exist_ok=True)
+    out_path = export_dir / "raw_chart.html"
+
+    return _render_charts_to_html(
+        payload=last_payload,
+        out_path=out_path,
+        page_title=f"Dashboard - {user_name}",
+    )

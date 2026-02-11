@@ -3,7 +3,7 @@
 	"endpoint": "/api/v1/chat/completions",
 	"timeout_seconds": 120,
 	"max_user_threads": 2,
-	"max_prompt_threads_per_user": 4,
+	"max_prompt_threads_per_user": 3,
 	"max_workers": 10,
 	"user_count": 100,
 	"model_names": [
