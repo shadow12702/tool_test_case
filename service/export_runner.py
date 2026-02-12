@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import shutil
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from pathlib import Path
@@ -53,7 +54,12 @@ def _write_prefix_xlsx(
     prefix: str,
     items: list[tuple[PromptItem, ChatCallResult]],
 ) -> str:
-    """Write a single prefix group to an xlsx file. Returns the file path."""
+    """Write (or overwrite) the prefix xlsx with all results collected so far.
+
+    Called every time a new prompt result arrives for this prefix, so the
+    file on disk always reflects the latest state.  If the process crashes,
+    all previously written rows are preserved.
+    """
     safe_name = _sanitize_folder_name(prefix)
     out_xlsx = export_dir / f"{safe_name}.xlsx"
 
@@ -126,28 +132,56 @@ def run_export_job(
 
     job_label = f"{user_name}/{effective_model_name}/{effective_chat_mode}"
 
-    # --- Pre-compute expected count per prefix (for incremental export) ---
+    # --- Pre-compute expected count per prefix (for progress tracking) ---
     prefix_expected: dict[str, int] = {}
     if not is_dashboard:
         for item in prompts:
             prefix = _extract_prompt_id_prefix(item.prompt_id)
             prefix_expected[prefix] = prefix_expected.get(prefix, 0) + 1
+    total_prefixes = len(prefix_expected)
 
     # Thread-local-ish session per worker
     sessions = [requests.Session() for _ in range(max_workers)]
 
+    max_retries = cfg.max_retries
+    # Backoff delays: 5s after 1st fail, 15s after 2nd, 30s after 3rd, ...
+    _RETRY_DELAYS = [5, 15, 30, 60]
+
     def _task(i: int, item: PromptItem) -> tuple[PromptItem, ChatCallResult]:
         sess = sessions[i % max_workers]
-        res = call_chat_api(
-            cfg=cfg,
-            user_input=item.user_input,
-            user_id=user_id,
-            user_name=user_name,
-            conv_uid=make_conv_uid(),
-            overrides=overrides,
-            session=sess,
-        )
-        return item, res
+        prompt_label = item.prompt_id or f"row_{item.row_index}"
+        last_res: ChatCallResult | None = None
+
+        for attempt in range(1, max_retries + 2):  # attempt 1 = first try, +retries
+            res = call_chat_api(
+                cfg=cfg,
+                user_input=item.user_input,
+                user_id=user_id,
+                user_name=user_name,
+                conv_uid=make_conv_uid(),
+                overrides=overrides,
+                session=sess,
+            )
+            last_res = res
+
+            if res.ok and res.assistant_content:
+                # Success with content - no need to retry
+                return item, res
+
+            if attempt <= max_retries:
+                is_timeout = res.status_code is None  # timeout/connection error
+                reason = "no content" if res.ok else res.error or "ERROR"
+                delay = _RETRY_DELAYS[min(attempt - 1, len(_RETRY_DELAYS) - 1)]
+
+                log.info(
+                    f"    [RETRY {attempt}/{max_retries}] {job_label} | "
+                    f"{prompt_label} - {reason} ({res.elapsed_ms}ms) "
+                    f"-> waiting {delay}s before retry"
+                )
+                time.sleep(delay)
+
+        # All attempts exhausted, return last result
+        return item, last_res  # type: ignore[return-value]
 
     results: list[tuple[PromptItem, ChatCallResult]] = []
     ok_count = 0
@@ -156,7 +190,7 @@ def run_export_job(
 
     # Incremental export state
     by_prefix: dict[str, list[tuple[PromptItem, ChatCallResult]]] = {}
-    written_prefixes: set[str] = set()
+    completed_prefixes: set[str] = set()
     written_files: list[str] = []
     dashboard_html_count = 0
 
@@ -206,21 +240,30 @@ def run_export_job(
                         f"    >> {item.prompt_id}: HTML export failed: {e}"
                     )
             else:
-                # --- Non-dashboard: group by prefix, export when group complete ---
+                # --- Non-dashboard: write prefix xlsx EVERY time a prompt completes ---
+                # File is overwritten with all rows collected so far, ensuring
+                # crash-safe progress (no data lost if process dies mid-run).
                 prefix = _extract_prompt_id_prefix(item.prompt_id)
                 by_prefix.setdefault(prefix, []).append((item, res))
+                got = len(by_prefix[prefix])
+                expected = prefix_expected[prefix]
 
-                if (
-                    prefix not in written_prefixes
-                    and len(by_prefix[prefix]) == prefix_expected[prefix]
-                ):
-                    path = _write_prefix_xlsx(export_dir, prefix, by_prefix[prefix])
-                    written_prefixes.add(prefix)
-                    written_files.append(path)
+                _write_prefix_xlsx(export_dir, prefix, by_prefix[prefix])
+
+                if got == expected and prefix not in completed_prefixes:
+                    completed_prefixes.add(prefix)
+                    written_files.append(
+                        str(export_dir / f"{_sanitize_folder_name(prefix)}.xlsx")
+                    )
                     log.info(
-                        f"    >> Exported {prefix}.xlsx "
-                        f"({len(by_prefix[prefix])} rows) "
-                        f"[{len(written_prefixes)}/{len(prefix_expected)} groups]"
+                        f"    >> Completed {prefix}.xlsx "
+                        f"({got}/{expected} rows) "
+                        f"[{len(completed_prefixes)}/{total_prefixes} groups done]"
+                    )
+                else:
+                    log.info(
+                        f"    >> Updated {prefix}.xlsx "
+                        f"({got}/{expected} rows)"
                     )
 
     return ExportJobResult(

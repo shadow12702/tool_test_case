@@ -1,11 +1,12 @@
 {
 	"base_url": "http://192.168.1.126:5670",
 	"endpoint": "/api/v1/chat/completions",
-	"timeout_seconds": 120,
+	"timeout_seconds": 300,
+	"max_retries": 2,
 	"max_user_threads": 2,
 	"max_prompt_threads_per_user": 3,
 	"max_workers": 10,
-	"user_count": 100,
+	"user_count": 2,
 	"model_names": [
 		"gemma3:27b-cloud",
 		"nemotron-3-nano:30b-cloud",

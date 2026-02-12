@@ -11,6 +11,7 @@ class ApiConfig:
     base_url: str
     endpoint: str
     timeout_seconds: int
+    max_retries: int
     max_user_threads: int
     max_prompt_threads_per_user: int
     max_workers: int
@@ -27,6 +28,7 @@ class ApiConfig:
             "base_url": self.base_url,
             "endpoint": self.endpoint,
             "timeout_seconds": self.timeout_seconds,
+            "max_retries": self.max_retries,
             "max_user_threads": self.max_user_threads,
             "max_prompt_threads_per_user": self.max_prompt_threads_per_user,
             "max_workers": self.max_workers,
@@ -46,6 +48,7 @@ def load_api_config(path: Path) -> ApiConfig:
         base_url=str(raw["base_url"]).rstrip("/"),
         endpoint=str(raw["endpoint"]),
         timeout_seconds=int(raw.get("timeout_seconds", 120)),
+        max_retries=max(0, int(raw.get("max_retries", 2))),
         max_user_threads=min(8, max(1, int(raw.get("max_user_threads", 8)))),
         max_prompt_threads_per_user=max(1, int(raw.get("max_prompt_threads_per_user", 1))),
         max_workers=int(raw.get("max_workers", 10)),

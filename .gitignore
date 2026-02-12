@@ -6,6 +6,7 @@ env/
 # Python cache
 __pycache__/
 *.pyc
-
+.pyc
 # Environment variables
 .env
+__init__.py
