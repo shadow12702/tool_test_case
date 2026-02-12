@@ -22,3 +22,27 @@ tasklist | findstr python
 taskkill /PID 12345 /F
 
 taskkill /IM python.exe /F
+
+
+
+
+
+{
+    "conv_uid": "qqqqqqqqqqeqwrbwrbtbwtn9bf1",
+    "user_input": "Hãy liệt kê các bảng liên quan và các cột dùng làm tiêu chí lọc để truy vấn các giao dịch có warranty phát sinh. Chỉ dùng những gì schema cung cấp.",
+    "user_name": "user-qqqq",
+    "chat_mode": "chat_with_db_qa",
+    "app_code": "chat_with_db_qa",
+    "temperature": 0.5,
+    "max_new_tokens": 4000,
+    "select_param": "postgres",
+    "model_name": "gpt-oss:20b-cloud",
+    "incremental": false,
+    "sys_code": "string",
+    "prompt_code": "string",
+    "ext_info": {}
+  }
+
+
+
+  d14f5dfa-9718-4ce8-9d52-1cd578709bf1
